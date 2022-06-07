@@ -1,110 +1,133 @@
-# OpenZeppelin Cairo Contracts
-[![Tests and linter](https://github.com/OpenZeppelin/cairo-contracts/actions/workflows/python-app.yml/badge.svg)](https://github.com/OpenZeppelin/cairo-contracts/actions/workflows/python-app.yml)
+# Stash
 
-**A library for secure smart contract development** written in Cairo for [StarkNet](https://starkware.co/product/starknet/), a decentralized ZK Rollup.
+## Overview
 
-> ## ⚠️ WARNING! ⚠️
-> This is repo contains highly experimental code.
-> Expect rapid iteration.
-> **Do not use in production.**
+Stash is a blockchain protocol that lets anyone lock and hide digital assets  (stashes) on any website ~~or any location for that matter~~, permissionlessly and without the need for 3rd parties. Stashes can later be claimed, and the contents released, by providing the correct set of keys or other requirements. The first use case for this protocol will be a browser extension which helps users create and discover caches as they browse the internet, enabling new methods for users to engage with content creator, brands, and each other. 
 
-## Installation
+With the ever growing popularity of the metaverse and digitial property rights enabled by blockchain, there arises a need to be able to interact with the metaverse in a similar manner to the "real world". The Stash protocol aims to create a flexible mechanism for attaching digital assets to a "location" in the metaverse, allowing for new interactions between users, apps, and any web3 connected technology.    
 
-### First time?
+### Inspiration
 
-Before installing Cairo on your machine, you need to install `gmp`:
-```bash
-sudo apt install -y libgmp3-dev # linux
-brew install gmp # mac
+This protocol was inspired by [GeoCaching](https://www.geocaching.com/play). From scavenger hunts to log books, we envision Stash becoming an open protocol that creates new ways for people to interact with one another and engage with content across the internet and time. 
+
+## Details
+
+### **Stash**
+
+Stashes are made up of four components:
+
+1. **ID** - This is the identifier for a cache and is composed of two things: 
+    1. **Location** - Any text set by the creator of the cache. Can be website url, image link, GPS coordinates or anything else to provide context. Can also be used when claiming as describe in **[Cache Modes](https://www.notion.so/Stash-e93bf5a1c5814a1d96b51f1b803344c4)** below. 
+    2. **Cache Number** - Auto-incremented number to uniquely identify caches in same location.   
+2. **Contents** - The crypto assets locked in the cache at time of creation. Can be added to by anyone, anytime after creation.
+3. **Keys** (optional) - Set by the creator of the cache. Hash of messages that will release contents when claiming the cache. Scavenger will provide the smart contract with pre-image of the keys which the smart contract will hash, compare for equality to cache keys and release contents on match.
+4. **Hints** (optional) - Plaintext messages to help user find the keys. Set by creator at time of cache creation. Can be updated by creator at any time.
+
+
+
+# Prep Env
+Install [Nile](https://github.com/OpenZeppelin/nile)
+
+# Compile
+Compile all contracts under contracts directory  
+`nile compile`  
+
+# Test
+Optional - Run all tests under tests directory  
+`pytest`
+
+# Deploy
+Run the local dev node  
+`nile node`
+
+Copy the private key from .env file and `export PKEY=1234`
+   
 ```
-> If you have any troubles installing gmp on your Apple M1 computer, [here’s a list of potential solutions](https://github.com/OpenZeppelin/nile/issues/22).
-
-### Set up the project
-Clone the repository
-
-```bash
-git clone git@github.com:OpenZeppelin/cairo-contracts.git
-```
-
-`cd` into it and create a Python virtual environment:
-
-```bash
-cd cairo-contracts
-python3 -m venv env
-source env/bin/activate
-```
-
-Install the [Nile](https://github.com/OpenZeppelin/nile) dev environment and then run `install` to get [the Cairo language](https://www.cairo-lang.org/docs/quickstart.html), a [local network](https://github.com/Shard-Labs/starknet-devnet/), and a [testing framework](https://docs.pytest.org/en/6.2.x/).
-```bash
-pip install cairo-nile
-nile install
-```
-
-## Usage
-
-### Compile the contracts
-```bash
-nile compile
-
-🤖 Compiling all Cairo contracts in the contracts directory
-🔨 Compiling contracts/IAccount.cairo
-🔨 Compiling contracts/Account.cairo
-🔨 Compiling contracts/AddressRegistry.cairo
-🔨 Compiling contracts/Initializable.cairo
-🔨 Compiling contracts/Ownable.cairo
-🔨 Compiling contracts/token/ERC721.cairo
-🔨 Compiling contracts/token/ERC20.cairo
-🔨 Compiling contracts/token/IERC20.cairo
-✅ Done
+nile setup PKEY1
+nile compile contracts/Stash.cairo
+nile deploy Stash --alias stash
 ```
 
-### Run tests
+## Optional - Deploy token for testing
+Compile and deploy ERC20 with name Token, symbol TKN and initial supply of 1000 going to first local address.  
+Convert the strings to felts using the python tool. 
+```
+nile compile contracts/token/IERC20.cairo
+nile compile contracts/token/ERC20.cairo
 
-```bash
-pytest
+TOKEN=$(python tools/tools.py to-felt Token)
+SYMBOL=$(python tools/tools.py to-felt TKN)
+LOCAL_ACCOUNT=$(cat 127.0.0.1.accounts.json | jq -c 'first(.[].address)' | xargs)
 
-====================== test session starts ======================
-platform linux -- Python 3.7.2, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
-rootdir: /home/readme/cairo-contracts
-plugins: asyncio-0.16.0, web3-5.24.0, typeguard-2.13.0
-collected 19 items                                                                                               
-
-tests/test_Account.py ....                                 [ 21%]
-tests/test_AddressRegistry.py ..                           [ 31%]
-tests/test_ERC20.py ..........                             [ 84%]
-tests/test_Initializable.py .                              [ 89%]
-tests/test_Ownable.py ..                                   [100%]
+nile deploy ERC20 --alias erc20 $TOKEN $SYMBOL 1000 0 $LOCAL_ACCOUNT
 ```
 
-### Extending Cairo contracts
+# Create a stash.
+Assuming you deployed the token for testing.
 
-There's no clear contract extensibility pattern for Cairo smart contracts yet. In the meantime the best way to extend our contracts is copypasting and modifying them at your own risk. Remember this contracts are still under development and they have not gone through any audit or security review whatsoever.
+1. Approve the stash protocol as a spender for your stash.  
+Use python to convert the hex address to a number otherwise nile complains  
+`nile send PKEY1 erc20 approve $(grep Stash.json 127.0.0.1.deployments.txt | cut -d : -f 1 | python -c "print(int(input(), 16))") 100 0`  
+2. Confirm transaction succeeded.  
+`nile debug <TRANSACTION HASH>`  
+1. Create a stash
+```
+# nile invoke stash createStash [location, token, amount low, amount high, key, hint]
+LOCATION=1
+AMOUNT_LOW=100
+AMOUNT_HIGH=0
+ERC20_ADDRESS=$(grep erc20 127.0.0.1.deployments.txt | cut -d : -f 1 | python -c "print(int(input(), 16))")
+KEY=$(python tools/tools.py calc-key-hash hello world)
+HINT_LEN=1
+HINT=$(python tools/tools.py to-felt "the answer is hello world") # Hint must be split into chunks of 31 characters!!
 
-- For Accounts, we suggest changing how `is_valid_signature` works to explore different signature validation schemes such as multisig, or some guardian logic like in [Argent's account](https://github.com/argentlabs/argent-contracts-starknet/blob/de5654555309fa76160ba3d7393d32d2b12e7349/contracts/ArgentAccount.cairo).
-- For ERC20 tokens we suggest removing or protecting the `mint` method, temporarily in place for testing purposes. You can customize token name, symbol, and may be worth exploring pre/post transfer checks.
+nile send PKEY1 stash createStash $LOCATION $ERC20_ADDRESS $AMOUNT_LOW $AMOUNT_HIGH $KEY $HINT_LEN $HINT
+```
+4. Confirm transaction was accepted
+`nile debug <TRANSACTION_HASH>`
+5. Confirm stash protocol has your funds
+`nile call erc20 balanceOf $(grep Stash.json 127.0.0.1.deployments.txt | cut -d : -f 1 | python -c "print(int(input(), 16))")`
+6. Take a look at the stash and verify some data.  
+The stash will have id #0.  
+`nile call stash getStash $LOCATION 0`  
+This returns stash data [token, amount low, amount high, key, hint, owner, claimed]
+   - the token and acccout addresses in `127.0.0.1.deployements.txt` should be the same as the erc20 and owner respectively.
+   - the amount, hey, and hint should all be the same
+   - claimed will be 0 as it is unclaimed 
 
 
-## Learn
+# Claim a Stash
+Set up a new account and claim the tokens in the stash.
+```
+export PKEY2=5678  
+nile setup PKEY2
 
-### Contract documentation
-* [Account](docs/Account.md)
-* [ERC20](docs/ERC20.md)
-* ERC721
-### Cairo
-* [StarkNet official documentation](https://www.cairo-lang.org/docs/hello_starknet/index.html#hello-starknet)
-* [Cairo language documentation](https://www.cairo-lang.org/docs/hello_cairo/index.html#hello-cairo)
-* Perama's [Cairo by example](https://perama-v.github.io/cairo/by-example/)
-* [Cairo 101 workshops](https://www.youtube.com/playlist?list=PLcIyXLwiPilV5RBZj43AX1FY4FJMWHFTY)
-### Nile
-* [Getting started with StarkNet using Nile](https://medium.com/coinmonks/starknet-tutorial-for-beginners-using-nile-6af9c2270c15)
-* [How to manage smart contract deployments with Nile](https://medium.com/@martriay/manage-your-starknet-deployments-with-nile-%EF%B8%8F-e849d40546dd)
+LOCAL_ACCOUNT_2=$(cat 127.0.0.1.accounts.json | jq -c 'nth(1; .[].address)' | xargs)
+```
 
-## Security
+Claim the stash with the new account
+```
+NUM_KEYS=2
+KEY1=$(python tools/tools.py to-felt hello)
+KEY2=$(python tools/tools.py to-felt world)
+nile send PKEY2 stash claimStash $LOCATION 0 $NUM_KEYS $KEY1 $KEY2
+```
 
-This project is still in a very early and experimental phase. It has never been audited nor thoroughly reviewed for security vulnerabilities. Do not use in production.
+Confirm transaction succeeded
+`nile debug <TRANSACTION_HASH>`
 
-Please report any security issues you find to security@openzeppelin.org.
+Check tokens were transferred to local account 2
+`nile call erc20 balanceOf $LOCAL_ACCOUNT_2`
 
-## License
+Check stash has status claimed (last return data = 1)
+`nile call stash getStash $LOCATION 0`
 
-OpenZeppelin Cairo Contracts is released under the [MIT License](LICENSE).
+# Alpha network deployment (goerli)
+
+Convenient to track transaction status: https://alpha4.starknet.io/feeder_gateway/get_transaction_receipt?transactionHash=
+
+1. Deploy PKEY1 and PKEY2
+```
+nile setup PKEY1 --network goerli
+nile setup PKEY2 --network goerli
+```
