@@ -11,8 +11,9 @@ With the ever growing popularity of the metaverse and the significance of digiti
 > This protocol was inspired by [GeoCaching](https://www.geocaching.com/play).  
 > From scavenger hunts to log books and much more, we envision Stash becoming an open protocol that creates new ways for people to interact with one another and engage with content across web3. 
 
+![overview](docs/StashOverview.png)
 
-The first use case for this protocol will be a browser extension ([Metacache]()) which helps users create and discover caches as they browse the internet, enabling new methods for users to engage with content creator, brands, and each other. 
+The first application to make use of this protocol is a browser extension ([Stash Extension](https://github.com/MosheStauber/stash-extension)) which helps users create and discover caches as they browse the internet, enabling new methods for users to engage with content creator, brands, and each other. 
 
 ### Stash Primitive
 
@@ -30,9 +31,6 @@ Stashes are made up of the following components:
 # Deploy Stash Protocol
 This section details how to deploy the stash protocol locally, how to create a stash, and how to claim one.  
 Tools are provided to compute the HashChain and any shortstring encoding.
-
-See the [Metacache extension]() for an application that makes use of the protocol.
-
 
 ## Prepare Environment
 Install [Nile](https://github.com/OpenZeppelin/nile)
