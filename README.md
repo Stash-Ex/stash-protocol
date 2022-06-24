@@ -1,26 +1,54 @@
-# Stash Protocol
 
-## Overview
 
-Stash is a blockchain protocol that lets anyone securely stash digital assets and publish arbitrary messages on any website (or any location in the metaverse), permissionlessly and without the help of 3rd parties. Anyone who provides the location and correct set of keys can unlock the stash and claim its contents. 
+# Table of contents
+
+- [Table of contents](#table-of-contents)
+- [Overview](#overview)
+  - [Inspiration](#inspiration)
+  - [High Level Diagram](#high-level-diagram)
+  - [Use cases](#use-cases)
+  - [What is a Stash?](#what-is-a-stash)
+- [Deploy Stash Protocol Locally](#deploy-stash-protocol-locally)
+  - [Prepare Environment](#prepare-environment)
+  - [Compile Contracts](#compile-contracts)
+  - [Unit Tests](#unit-tests)
+  - [Deploy Protocol](#deploy-protocol)
+    - [Optional - Deploy token for testing](#optional---deploy-token-for-testing)
+- [Create a stash](#create-a-stash)
+- [Claim a Stash](#claim-a-stash)
+- [Alpha network deployment (goerli)](#alpha-network-deployment-goerli)
+
+
+# Overview
+
+Stash is a blockchain protocol that lets anyone securely stash digital assets on any website (or any location in the metaverse), permissionlessly and without the help of 3rd parties. Anyone who provides the location and correct set of keys can unlock the stash and claim its contents. 
 
 With the ever growing popularity of the metaverse and the significance of digitial property rights enabled by blockchain, there arises a need to be able to interact with the metaverse in a similar manner to the "real world". The Stash protocol aims to create a flexible mechanism for attaching digital assets along with messages to an arbitrary location in the metaverse, allowing for new interactions between users, apps, and any web3 connected technology.    
 
-> ### Inspiration
->
+## Inspiration  
 > This protocol was inspired by [GeoCaching](https://www.geocaching.com/play).  
 > From scavenger hunts to log books and much more, we envision Stash becoming an open protocol that creates new ways for people to interact with one another and engage with content across web3. 
 
+## High Level Diagram
 ![overview](docs/StashOverview.png)
 
-The first application to make use of this protocol is a browser extension ([Stash Extension](https://github.com/MosheStauber/stash-extension)) which helps users create and discover caches as they browse the internet, enabling new methods for users to engage with content creator, brands, and each other. 
+## Use cases
 
-### Stash Primitive
+**Stash Creators**
+- Content creators can create stashes to reward their fans by hiding the unlock keys throughout their content, ensuring fans' engagement with the content to find all keys.
+- Brands can create scavenger hunts that guide users through a series of engagement points with their products and services that award users with crypto, NFTs or discounts for their products.
+- Organize private scavenger hunts across the internet. Organizers can ensure each participant is a member of some group by requiring user to own a particular set of NFT or some other verification method (not quite there yet but soon...).
+- Individuals can create stashes to challenge friends and other community members to find the keys to the puzzle. 
+
+
+The first application to make use of this protocol is a browser extension ([Stash Extension](https://github.com/MosheStauber/stash-extension)) which helps users create and discover stashes as they browse the internet. 
+
+## What is a Stash?
 
 Stashes are made up of the following components:
 
 1. **ID** - This is the identifier for a stash and is composed of two things: 
-    1. **Location** - Any felt set by the creator of the cache. Can be website url, image link, GPS coordinates or anything else to provide context. Text is limited to 31 characters if using cairo short string encoding. 
+    1. **Location** - Any `felt` set by the creator of the stash. Can be website url, image link, GPS coordinates or anything else to provide a key. Text is limited to 31 characters if using cairo short string encoding. 
     2. **Stash Number** - Auto-incremented number to uniquely identify multiple stashes in same location.   
 2. **Contents** - The crypto assets locked in the stash at time of creation. 
 3. **Key**- The result of computing the [Hash Chain](https://github.com/starkware-libs/cairo-lang/blob/fc97bdd8322a7df043c87c371634b26c15ed6cee/src/starkware/cairo/common/hash_chain.cairo#L8) on the keys that unlock the stash.  
@@ -28,7 +56,7 @@ Stashes are made up of the following components:
 4. **Hint** (optional) - Plaintext message of any length to help user find the keys. Set by creator at time of stash creation.
    
 
-# Deploy Stash Protocol
+# Deploy Stash Protocol Locally
 This section details how to deploy the stash protocol locally, how to create a stash, and how to claim one.  
 Tools are provided to compute the HashChain and any shortstring encoding.
 
@@ -47,7 +75,7 @@ Optional - Runs all tests under tests directory
 pytest
 ```
 
-## Deploying Stash Protocol
+## Deploy Protocol
 Run the local starknet dev node  
 ```
 nile node
@@ -78,7 +106,7 @@ AMOUNT_HIGH=0
 nile deploy ERC20 --alias erc20 $TOKEN $SYMBOL $AMOUNT_LOW $AMOUNT_HIGH $LOCAL_ACCOUNT
 ```
 
-## Create a stash.
+# Create a stash
 Assuming you deployed the token for testing.
 
 1. Approve the stash protocol as a spender of the token you want to stash away.  
@@ -137,7 +165,7 @@ This returns stash data [token, amount low, amount high, key, owner, claimed, hi
    - claimed will be 0 as it is unclaimed 
 
 
-## Claim a Stash
+# Claim a Stash
 Set up a new account and claim the tokens in the stash.
 ```
 export PKEY2=5678  
@@ -170,7 +198,7 @@ Check stash has status claimed (last return data = 1)
 nile call stash getStash $LOCATION 0
 ```
 
-## Alpha network deployment (goerli)
+# Alpha network deployment (goerli)
 
 Convenient to track transaction status: https://alpha4.starknet.io/feeder_gateway/get_transaction_receipt?transactionHash=
 
