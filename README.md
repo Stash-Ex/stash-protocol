@@ -17,6 +17,7 @@
 - [Create a stash](#create-a-stash)
 - [Claim a Stash](#claim-a-stash)
 - [Alpha network deployment (goerli)](#alpha-network-deployment-goerli)
+- [Roadmap](#roadmap)
 
 
 # Overview
@@ -210,3 +211,6 @@ nile setup PKEY2 --network goerli
 
 Repeat above steps but with `--network goerli`...  
 Adjust deployment file name from local to goerli deployemnt files like `goerli.deployments.txt` when parsing stash and account addresses.
+
+# Roadmap
+Please take a look at our [roadmap](https://github.com/orgs/Stash-Ex/projects/1) for details on exciting upcoming features!
